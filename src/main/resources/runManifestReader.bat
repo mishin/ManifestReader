@@ -1,0 +1,1 @@
+java -jar ManifestReader-1.0.jar
