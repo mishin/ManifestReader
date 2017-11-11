@@ -4,13 +4,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
 /**
  * Created by Mishin737 on 18.01.2017.
- * Reading Manifest file
  */
 public class ManifestReader {
     // These hold version information.
@@ -19,21 +19,24 @@ public class ManifestReader {
 
     private final Logger logger;
     private final Class<?> clazz;
+    private final String prefix_log;
 
     /**
-     * A class constructor here, passing all the parameters
+     * Контруктор класса, сюда передаем все параметры
      *
-     * @param logger current logger
-     * @param clazz  name of current class
+     * @param logger      current logger
+     * @param clazz       name of current class
+     * @param m_logPrefix prefix for log
      */
-    public ManifestReader(Logger logger, Class<?> clazz) {
+    public ManifestReader(Logger logger, Class<?> clazz, String m_logPrefix) {
         this.logger = logger;
         this.clazz = clazz;
+        this.prefix_log = m_logPrefix;
         readVersionParameters();
     }
 
     /**
-     * Read pom variables from the manifest file
+     * Читаем переменные pom из файла манифеста
      */
     private void readVersionParameters() {
         if (StringUtils.isBlank(this.version)) {
@@ -56,7 +59,7 @@ public class ManifestReader {
     }
 
     private String readVariableFromManifest(String manifestPath, String pomVariable) {
-        Manifest manifest;
+        Manifest manifest = null;
         try {
             manifest = new Manifest(new URL(manifestPath).openStream());
             Attributes attrs = manifest.getMainAttributes();
@@ -65,6 +68,8 @@ public class ManifestReader {
             logger.debug(String.format("Read {%s}: {%s}", pomVariable, manifestVariable));
 
             return manifestVariable;
+        } catch (FileNotFoundException e) {
+            return String.format("Read {%s}: {%s}", "JUnitTestMode", "?");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -77,26 +82,5 @@ public class ManifestReader {
 
     public String getTimestamp() {
         return timestamp;
-    }
-
-    /**
-     * Writes a standard service startup message to the log.
-     */
-    private static void writeStartupMessage(Logger log) {
-        ManifestReader manifest = new ManifestReader(log, ManifestReader.class);
-        final StringBuffer buffer = new StringBuffer();
-        buffer.append("\t\t Version: ");
-        buffer.append(" " + manifest.getVersion());
-        buffer.append("\n");
-        buffer.append("\t\t Date built: ");
-        buffer.append(" " + manifest.getTimestamp());
-        buffer.append("\n");
-        log.info(buffer.toString());
-    }
-
-
-    public static void main(String[] args) {
-        Logger log = Logger.getLogger(ManifestReader.class.getClass().getName());
-        writeStartupMessage(log);
     }
 }
